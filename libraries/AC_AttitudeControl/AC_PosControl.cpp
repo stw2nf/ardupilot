@@ -5,6 +5,7 @@
 #include <AP_Motors/AP_Motors.h>    // motors library
 #include <AP_Vehicle/AP_Vehicle.h>
 #include <AP_InertialSensor/AP_InertialSensor.h>
+#include <../ArduPlane/Plane.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -1178,7 +1179,11 @@ void AC_PosControl::accel_to_lean_angles(float accel_x_cmss, float accel_y_cmss,
     const float accel_right = -accel_x_cmss * _ahrs.sin_yaw() + accel_y_cmss * _ahrs.cos_yaw();
 
     // update angle targets that will be passed to stabilize controller
-    pitch_target = accel_to_angle(-accel_forward * 0.01) * 100;
+    if (plane.g2.neutral_pitch_en){
+        pitch_target = 0.0f;
+    } else {
+        pitch_target = accel_to_angle(-accel_forward * 0.01) * 100;
+    }
     float cos_pitch_target = cosf(pitch_target * M_PI / 18000.0f);
     roll_target = accel_to_angle((accel_right * cos_pitch_target)*0.01) * 100;
 }

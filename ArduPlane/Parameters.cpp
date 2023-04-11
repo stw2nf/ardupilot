@@ -1226,6 +1226,14 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @Bitmask: 0: Servo 1, 1: Servo 2, 2: Servo 3, 3: Servo 4, 4: Servo 5, 5: Servo 6, 6: Servo 7, 7: Servo 8, 8: Servo 9, 9: Servo 10, 10: Servo 11, 11: Servo 12, 12: Servo 13, 13: Servo 14, 14: Servo 15
     AP_GROUPINFO("ONESHOT_MASK", 32, ParametersG2, oneshot_mask, 0),
 
+    // @Param: NEUTRAL_PITCH_EN
+    // @DisplayName: Neutral Pitch Translation Enable
+    // @Description: In tilt rotor VTOL configurations, allow for tilt motors to be used for pitch neutral, fore/aft translation. In QACRO, QHOVER, and QSTABILIZE fore/aft translation is controlled by an RC Channel (209). In velocity controlled VTOL modes (QLOITER, QRTL, etc.) fore/aft translation is controlled by Q_VFWD_GAIN.
+    // @Units: 
+    // @Range: 0 1
+    // @User: Standard
+    AP_GROUPINFO("NEUTRAL_PITCH_EN", 35, ParametersG2, neutral_pitch_en, NEUTRAL_PITCH_EN_DEFAULT),
+    
 #if AP_SCRIPTING_ENABLED
     // @Group: FOLL
     // @Path: ../libraries/AP_Follow/AP_Follow.cpp

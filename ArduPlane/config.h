@@ -52,6 +52,9 @@
 #ifndef FLAP_2_SPEED
  # define FLAP_2_SPEED 0
 #endif
+#ifndef NEUTRAL_PITCH_EN_DEFAULT
+ # define NEUTRAL_PITCH_EN_DEFAULT      0     // default value for pitch neutral translation enable
+#endif
 //////////////////////////////////////////////////////////////////////////////
 // FLIGHT_MODE
 // FLIGHT_MODE_CHANNEL

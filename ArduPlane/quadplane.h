@@ -171,6 +171,8 @@ public:
     // Check if servo auto trim is allowed
     bool allow_servo_auto_trim();
 
+    AP_Float tilt_max_speed;
+
 private:
     AP_AHRS &ahrs;
     AP_Vehicle::MultiCopter aparm;
@@ -370,7 +372,7 @@ private:
     // manual forward throttle input
     AP_Float fwd_thr_max;
     RC_Channel *rc_fwd_thr_ch;
-
+    
     // QACRO mode max roll/pitch/yaw rates
     AP_Float acro_roll_rate;
     AP_Float acro_pitch_rate;

@@ -282,18 +282,18 @@ void Tiltrotor::continuous_update(void)
     }
 #endif
 
-    // if not in assisted flight and in QACRO, QSTABILIZE or QHOVER mode
-    if (!quadplane.assisted_flight &&
+    // if not in assisted flight and in QACRO, QSTABILIZE or QHOVER mode and Pitch Neutral Translation is not Enabled
+    if ((!quadplane.assisted_flight) &&
         (plane.control_mode == &plane.mode_qacro ||
          plane.control_mode == &plane.mode_qstabilize ||
-         plane.control_mode == &plane.mode_qhover)) {
+         plane.control_mode == &plane.mode_qhover) && (!plane.g2.neutral_pitch_en)){
         if (quadplane.rc_fwd_thr_ch == nullptr) {
             // no manual throttle control, set angle to zero
             slew(0);
         } else {
-            // manual control of forward throttle
+            // manual control of forward throttle up to max VTOL angle
             float settilt = .01f * quadplane.forward_throttle_pct();
-            slew(settilt);
+            slew(MIN(settilt * max_angle_deg * (1/90.0), get_forward_flight_tilt())); 
         }
         return;
     }
@@ -505,8 +505,27 @@ void Tiltrotor::vectoring(void)
     const float fixed_tilt_limit = fixed_angle / total_angle;
     const float level_out = 1.0 - fixed_tilt_limit;
 
+    // output value for tilt motors that corresponds to Q_TILT_MAX
+    const float limit_out = zero_out + (max_angle_deg / total_angle);
     // calculate the basic tilt amount from current_tilt
     float base_output = zero_out + (current_tilt * (level_out - zero_out));
+    // Initialize neutral pitch output variable
+    float man_tilt_output;
+
+    // if we're not assisted, in vtol mode and have neutral pitch translation enabled
+    if (!quadplane.assisted_flight && quadplane.in_vtol_mode() && plane.g2.neutral_pitch_en) {
+        // Positive input maps from tilt yaw angle to max tilt angle
+        // Negative input maps from 0 to tilt yaw angle
+        if (quadplane.forward_throttle_pct() > 0.0f){
+            man_tilt_output = linear_interpolate(0.0f, limit_out - zero_out, quadplane.forward_throttle_pct(), 0.0f, 1.0f);
+        }
+        else{
+            man_tilt_output = linear_interpolate(-zero_out, 0.0f, quadplane.forward_throttle_pct(), -1.0f, 0.0f);
+        }
+    } else {
+        man_tilt_output = 0.0f;
+    }
+
     // for testing when disarmed, apply vectored yaw in proportion to rudder stick
     // Wait TILT_DELAY_MS after disarming to allow props to spin down first.
     constexpr uint32_t TILT_DELAY_MS = 3000;
@@ -573,11 +592,11 @@ void Tiltrotor::vectoring(void)
         const float avg_roll_factor = 0.5;
         const float tilt_offset = constrain_float(yaw_out * cos_tilt + avg_roll_factor * roll_out * sin_tilt, -1, 1);
 
-        SRV_Channels::set_output_scaled(SRV_Channel::k_tiltMotorLeft,  1000 * constrain_float(base_output + tilt_offset * yaw_range,0,1));
-        SRV_Channels::set_output_scaled(SRV_Channel::k_tiltMotorRight, 1000 * constrain_float(base_output - tilt_offset * yaw_range,0,1));
+        SRV_Channels::set_output_scaled(SRV_Channel::k_tiltMotorLeft,  1000 * constrain_float(base_output + man_tilt_output + (tilt_offset * yaw_range),0,1));
+        SRV_Channels::set_output_scaled(SRV_Channel::k_tiltMotorRight, 1000 * constrain_float(base_output + man_tilt_output - (tilt_offset * yaw_range),0,1));
         SRV_Channels::set_output_scaled(SRV_Channel::k_tiltMotorRear,  1000 * constrain_float(base_output,0,1));
-        SRV_Channels::set_output_scaled(SRV_Channel::k_tiltMotorRearLeft,  1000 * constrain_float(base_output + tilt_offset * yaw_range,0,1));
-        SRV_Channels::set_output_scaled(SRV_Channel::k_tiltMotorRearRight, 1000 * constrain_float(base_output - tilt_offset * yaw_range,0,1));
+        SRV_Channels::set_output_scaled(SRV_Channel::k_tiltMotorRearLeft,  1000 * constrain_float(base_output + man_tilt_output + (tilt_offset * yaw_range),0,1));
+        SRV_Channels::set_output_scaled(SRV_Channel::k_tiltMotorRearRight, 1000 * constrain_float(base_output + man_tilt_output - (tilt_offset * yaw_range),0,1));
     }
 }
 

@@ -160,7 +160,8 @@ public:
     friend class ModeTakeoff;
     friend class ModeThermal;
     friend class ModeLoiterAltQLand;
-
+    friend class AC_PosControl;
+    
     Plane(void);
 
 private:

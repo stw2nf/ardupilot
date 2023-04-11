@@ -562,6 +562,9 @@ public:
 
     AP_Int32        oneshot_mask;
 
+    // Pitch Neutral Translation Enable 
+    AP_Int8 neutral_pitch_en;
+
     // just to make compilation easier when all things are compiled out...
     uint8_t unused_integer;
 };

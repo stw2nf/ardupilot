@@ -475,6 +475,12 @@ const AP_Param::GroupInfo QuadPlane::var_info2[] = {
     // @User: Standard
     AP_SUBGROUPINFO(command_model_pilot, "PLT_Y_", 33, QuadPlane, AC_CommandModel),
 
+    // @Param: TILT_MAX_SP
+    // @DisplayName: Speed at Q_TILT_MAX
+    // @Description: Speed at Q_TILT_MAX used for velocity controlled modes with Pitch Neutral Translation
+    // @Range: 0 100
+    AP_GROUPINFO("TILT_MAX_SP", 34, QuadPlane, tilt_max_speed, 0),
+
     AP_GROUPEND
 };
 
@@ -3420,6 +3426,11 @@ float QuadPlane::forward_throttle_pct()
 
         if (rc_fwd_thr_ch == nullptr) {
             return 0;
+        } else if (plane.g2.neutral_pitch_en){
+            // calculate fwd throttle demand from manual input and scale to percentage
+            float fwd_thr = rc_fwd_thr_ch->norm_input();
+
+            return fwd_thr;
         } else {
             // calculate fwd throttle demand from manual input
             float fwd_thr = rc_fwd_thr_ch->percent_input();
@@ -3451,7 +3462,7 @@ float QuadPlane::forward_throttle_pct()
         vel_forward.integrator = 0;
         deltat = 0.1;
     }
-    if (deltat < 0.1) {
+    if (deltat < 0.1 && !plane.g2.neutral_pitch_en) {
         // run at 10Hz
         return vel_forward.last_pct;
     }
@@ -3475,26 +3486,46 @@ float QuadPlane::forward_throttle_pct()
 
     float fwd_vel_error = vel_error_body.x;
 
-    // scale forward velocity error by maximum airspeed
-    fwd_vel_error /= MAX(plane.aparm.airspeed_max, 5);
+    if (plane.g2.neutral_pitch_en){
 
-    // add in a component from our current pitch demand. This tends to
-    // move us to zero pitch. Assume that LIM_PITCH would give us the
-    // WP nav speed.
-    fwd_vel_error -= (wp_nav->get_default_speed_xy() * 0.01f) * plane.nav_pitch_cd / (float)plane.aparm.pitch_limit_max_cd;
+        // Backward Speed Maximum
+        const float tilt_min_speed = -(tiltrotor.tilt_yaw_angle / tiltrotor.max_angle_deg) * tilt_max_speed;
 
-    if (should_relax() && vel_ned.length() < 1) {
-        // we may be landed
-        fwd_vel_error = 0;
-        vel_forward.integrator *= 0.95f;
+        // Constrain Velocity Error to Max and Min achievable from tilt angles
+        fwd_vel_error = constrain_float(fwd_vel_error, tilt_min_speed, tilt_max_speed);
+        float tilt_output;
+
+        if (fwd_vel_error > 0.0f){
+            tilt_output = linear_interpolate(0.0f, 1.0f, fwd_vel_error, 0.0f, tilt_max_speed);
+        }
+        else{
+            tilt_output = linear_interpolate(-1.0f, 0.0f, fwd_vel_error, tilt_min_speed, 0.0f);
+        }
+        tilt_output = constrain_float(tilt_output, -1.0f, 1.0f);
+        return tilt_output;
+
+    } else{
+        // scale forward velocity error by maximum airspeed
+        fwd_vel_error /= MAX(plane.aparm.airspeed_max, 5);
+
+        // add in a component from our current pitch demand. This tends to
+        // move us to zero pitch. Assume that LIM_PITCH would give us the
+        // WP nav speed.
+        fwd_vel_error -= (wp_nav->get_default_speed_xy() * 0.01f) * plane.nav_pitch_cd / (float)plane.aparm.pitch_limit_max_cd;
+
+        if (should_relax() && vel_ned.length() < 1) {
+            // we may be landed
+            fwd_vel_error = 0;
+            vel_forward.integrator *= 0.95f;
+        }
+
+        // integrator as throttle percentage (-100 to 100)
+        vel_forward.integrator += fwd_vel_error * deltat * vel_forward.gain * 100;
+
+        // inhibit reverse throttle and allow petrol engines with min > 0
+        int8_t fwd_throttle_min = plane.have_reverse_thrust() ? 0 : plane.aparm.throttle_min;
+        vel_forward.integrator = constrain_float(vel_forward.integrator, fwd_throttle_min, plane.aparm.throttle_cruise);
     }
-    
-    // integrator as throttle percentage (-100 to 100)
-    vel_forward.integrator += fwd_vel_error * deltat * vel_forward.gain * 100;
-
-    // inhibit reverse throttle and allow petrol engines with min > 0
-    int8_t fwd_throttle_min = plane.have_reverse_thrust() ? 0 : plane.aparm.throttle_min;
-    vel_forward.integrator = constrain_float(vel_forward.integrator, fwd_throttle_min, plane.aparm.throttle_cruise);
 
     if (in_vtol_land_approach()) {
         // when we are doing horizontal positioning in a VTOL land
@@ -3520,7 +3551,6 @@ float QuadPlane::forward_throttle_pct()
         // if the percent is 0 then decay the integrator
         vel_forward.integrator *= 0.95f;
     }
-
     return vel_forward.last_pct;
 }
 
