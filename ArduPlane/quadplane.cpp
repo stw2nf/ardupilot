@@ -494,7 +494,6 @@ const AP_Param::GroupInfo QuadPlane::var_info2[] = {
     // @Values: 0.5:Very Soft, 0.2:Soft, 0.15:Medium, 0.1:Crisp, 0.05:Very Crisp
     // @User: Standard
     AP_SUBGROUPINFO(command_model_pilot, "PLT_Y_", 33, QuadPlane, AC_CommandModel),
-
     // @Param: RTL_ALT_MIN
     // @DisplayName: QRTL minimum altitude
     // @Description: If VTOL motors are active QRTL mode will VTOL climb to at least this altitude before returning home. If outside 150% the larger of WP_LOITER_RAD and RTL_RADIUS the vehicle will VTOL climb to Q_RTL_ALT. This parameter has no effect if the vehicle is in forward flight. Should be between Q_LAND_FINAL_ALT and Q_RTL_ALT
@@ -503,6 +502,12 @@ const AP_Param::GroupInfo QuadPlane::var_info2[] = {
     // @Increment: 1
     // @User: Standard
     AP_GROUPINFO("RTL_ALT_MIN", 34, QuadPlane, qrtl_alt_min, 10),
+
+    // @Param: CTRL_SCHEME
+    // @DisplayName: Forward flight control scheme
+    // @Description: Set to 0 for all surfaces for roll control and canard only for pitch control. Set to 1 for canard only pitch and wing only roll control. Set to 2 for canard only pitch and roll control.
+    // @Range: 0 1
+    AP_GROUPINFO("CTRL_SCHEME", 35, QuadPlane, ctrl_scheme, 0),
 
     AP_GROUPEND
 };
