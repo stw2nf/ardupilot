@@ -475,6 +475,12 @@ const AP_Param::GroupInfo QuadPlane::var_info2[] = {
     // @User: Standard
     AP_SUBGROUPINFO(command_model_pilot, "PLT_Y_", 33, QuadPlane, AC_CommandModel),
 
+    // @Param: CTRL_SCHEME
+    // @DisplayName: Forward flight control scheme
+    // @Description: Set to 0 for all surfaces for roll control and canard only for pitch control. Set to 1 for canard only pitch and wing only roll control. Set to 2 for canard only pitch and roll control.
+    // @Range: 0 1
+    AP_GROUPINFO("CTRL_SCHEME", 35, QuadPlane, ctrl_scheme, 0),
+
     AP_GROUPEND
 };
 
