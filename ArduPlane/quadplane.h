@@ -397,6 +397,9 @@ private:
     // Control Scheme Parameter
     AP_Int8 ctrl_scheme;
 
+    // Transition Speed Parameter
+    AP_Int16 tran_speed;
+    
     // time we last got an EKF yaw reset
     uint32_t ekfYawReset_ms;
 

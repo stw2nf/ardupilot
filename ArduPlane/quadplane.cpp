@@ -509,6 +509,12 @@ const AP_Param::GroupInfo QuadPlane::var_info2[] = {
     // @Range: 0 1
     AP_GROUPINFO("CTRL_SCHEME", 35, QuadPlane, ctrl_scheme, 0),
 
+    // @Param: TRAN_SPEED
+    // @DisplayName: Transition Speed to forward flight
+    // @Description: Use when a lower speed than arspd_fbw_min is required for transition to forward flight.  
+    // @Range: 0 100
+    AP_GROUPINFO("TRAN_SPEED", 36, QuadPlane, tran_speed, 0),
+
     AP_GROUPEND
 };
 
@@ -1627,7 +1633,11 @@ void SLT_Transition::update()
         }
 
         transition_low_airspeed_ms = now;
-        if (have_airspeed && aspeed > plane.aparm.airspeed_min && !quadplane.assisted_flight) {
+
+        // If Transition speed parameter is not set, use airspeed_min. Otherwise use transition speed.
+        AP_Int16 transition_speed = (quadplane.tran_speed==0) ? plane.aparm.airspeed_min : quadplane.tran_speed;
+
+        if (have_airspeed && aspeed > transition_speed && !quadplane.assisted_flight) {
             transition_state = TRANSITION_TIMER;
             airspeed_reached_tilt = quadplane.tiltrotor.current_tilt;
             gcs().send_text(MAV_SEVERITY_INFO, "Transition airspeed reached %.1f", (double)aspeed);
