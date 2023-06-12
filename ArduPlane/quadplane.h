@@ -394,6 +394,9 @@ private:
     AP_Float acro_pitch_rate;
     AP_Float acro_yaw_rate;
 
+    // Transition Speed Parameter
+    AP_Int16 tran_speed;
+    
     // time we last got an EKF yaw reset
     uint32_t ekfYawReset_ms;
 
