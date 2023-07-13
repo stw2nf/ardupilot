@@ -765,6 +765,7 @@ void AP_MotorsMulticopter::output_motor_mask(float thrust, uint8_t mask, float r
                  copter frame roll is plane frame yaw as this only
                  apples to either tilted motors or tailsitters
                  */
+                GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "Motor: %i \n Factor: %.2f", i, get_roll_factor(i));
                 float diff_thrust = get_roll_factor(i) * rudder_dt * 0.5f;
                 if (diff_thrust > 0){
                     set_actuator_with_slew(_actuator[i], thrust + diff_thrust);
