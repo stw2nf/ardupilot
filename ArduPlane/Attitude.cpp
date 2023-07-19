@@ -493,6 +493,11 @@ void Plane::calc_nav_yaw_coordinated()
         const float coordination_yaw_rate = degrees(GRAVITY_MSS * tanf(radians(nav_roll_cd*0.01f))/MAX(aparm.airspeed_min,smoothed_airspeed));
         commanded_rudder = yawController.get_rate_out(yaw_rate+coordination_yaw_rate,  speed_scaler, false);
         using_rate_controller = true;
+    } else if ((control_mode == &mode_fbwa || control_mode == &mode_fbwb || control_mode == &mode_cruise) && g.acro_yaw_rate > 0 && yawController.rate_control_enabled()) {
+        // add in the corrdinated turn yaw rate to make it easier to fly while tuning the yaw rate controller
+        const float coordination_yaw_rate = degrees(GRAVITY_MSS * tanf(radians(nav_roll_cd*0.01f))/MAX(aparm.airspeed_min,smoothed_airspeed));
+        commanded_rudder = yawController.get_rate_out(coordination_yaw_rate,  speed_scaler, false);
+        using_rate_controller = true;
     } else {
         if (control_mode == &mode_stabilize && rudder_in != 0) {
             disable_integrator = true;
