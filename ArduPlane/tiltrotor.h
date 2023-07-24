@@ -80,6 +80,7 @@ public:
     AP_Float fixed_gain;
     AP_Float flap_angle_deg;
     AP_Float fixed_throw;
+    AP_Float max_angle_loit;
     float current_tilt;
     float current_throttle;
     bool _motors_active:1;
