@@ -89,6 +89,16 @@ const AP_Param::GroupInfo Tiltrotor::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("FIX_THROW", 11, Tiltrotor, fixed_throw, 0),
 
+    // @Param: LOIT_MAX
+    // @DisplayName: Maximum tilt angle used in QLOITER
+    // @Description: This is the maximum angle of the tiltable motors at which multicopter control will be enabled in QLOITER
+    // @Units: deg
+    // @Increment: 1
+    // @Range: 20 80
+    // @User: Standard
+    AP_GROUPINFO("LOIT_MAX", 12, Tiltrotor, max_angle_loit, 0),
+
+
 
     AP_GROUPEND
 };
@@ -318,7 +328,12 @@ void Tiltrotor::continuous_update(void)
         // Q_TILT_MAX. Below 50% throttle we decrease linearly. This
         // relies heavily on Q_VFWD_GAIN being set appropriately.
        float settilt = constrain_float((SRV_Channels::get_output_scaled(SRV_Channel::k_throttle)-MAX(plane.aparm.throttle_min.get(),0)) * 0.02, 0, 1);
-       slew(MIN(settilt * max_angle_deg * (1/90.0), get_forward_flight_tilt())); 
+       // Limit to Q_TILT_LOIT if it is set, otherwise limit to Q_TILT_MAX
+       if(max_angle_loit > 0 && (plane.control_mode == &plane.mode_qloiter || plane.control_mode == &plane.mode_qrtl || plane.control_mode == &plane.mode_qland)){
+            slew(MIN(settilt * max_angle_loit * (1/90.0), get_forward_flight_tilt()));
+       } else{
+            slew(MIN(settilt * max_angle_deg * (1/90.0), get_forward_flight_tilt()));
+       }
     }
 }
 
