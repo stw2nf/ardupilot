@@ -756,7 +756,6 @@ void AP_MotorsMulticopter::output_motor_mask(float thrust, uint8_t mask, float r
 {
     const int16_t pwm_min = get_pwm_output_min();
     const int16_t pwm_range = get_pwm_output_max() - pwm_min;
-
     for (uint8_t i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
         if (motor_enabled[i]) {
             if ((mask & (1U << i)) && armed() && get_interlock()) {

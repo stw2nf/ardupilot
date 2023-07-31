@@ -1638,11 +1638,14 @@ void SLT_Transition::update()
         // reset integrators while we are below target airspeed as we
         // may build up too much while still primarily under
         // multicopter control
-        plane.pitchController.reset_I();
-        plane.rollController.reset_I();
-
-        // give full authority to attitude control
-        quadplane.attitude_control->set_throttle_mix_max(1.0f);
+        if(quadplane.in_transition() && quadplane.tiltrotor.current_tilt > quadplane.tiltrotor.trans_yaw_angle/90){
+            quadplane.hold_stabilize(quadplane.get_pilot_throttle());
+        } else{
+            plane.pitchController.reset_I();
+            plane.rollController.reset_I();
+            // give full authority to attitude control
+            quadplane.attitude_control->set_throttle_mix_max(1.0f);
+        }
         break;
     }
         

@@ -98,7 +98,30 @@ const AP_Param::GroupInfo Tiltrotor::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("LOIT_MAX", 12, Tiltrotor, max_angle_loit, 0),
 
+    // @Param: YAW_ANG
+    // @DisplayName: Tilt angle for blended yaw control
+    // @Description: Past this angle the Plane yaw controller will be used
+    // @Units: deg
+    // @Increment: 1
+    // @Range: 20 80
+    // @User: Standard
+    AP_GROUPINFO("YAW_ANG", 13, Tiltrotor, trans_yaw_angle, 0),
 
+    // @Param: YAW_GAIN
+    // @DisplayName: Gain for transition yaw controller
+    // @Description: Percentage of rudder to use in transition
+    // @Increment: .1
+    // @Range: 0 1
+    // @User: Standard
+    AP_GROUPINFO("YAW_GAIN", 14, Tiltrotor, trans_yaw_gain, 0),
+
+    // @Param: THRW_GAIN
+    // @DisplayName: Gain for transition control surface throw
+    // @Description: Percentage of control surface movement to use in transition
+    // @Increment: .1
+    // @Range: 0 1
+    // @User: Standard
+    AP_GROUPINFO("THRW_GAIN", 15, Tiltrotor, trans_throw_gain, 0),
 
     AP_GROUPEND
 };
@@ -262,7 +285,7 @@ void Tiltrotor::continuous_update(void)
         if (!quadplane.motor_test.running) {
             // the motors are all the way forward, start using them for fwd thrust
             uint8_t mask = is_zero(current_throttle)?0:(uint8_t)tilt_mask.get();
-            motors->output_motor_mask(current_throttle, mask, plane.rudder_dt);
+            motors->output_motor_mask(current_throttle, mask, trans_yaw_gain*plane.rudder_dt);
         }
         return;
     }
@@ -327,13 +350,19 @@ void Tiltrotor::continuous_update(void)
         // Q_TILT_MAX. Anything above 50% throttle gets
         // Q_TILT_MAX. Below 50% throttle we decrease linearly. This
         // relies heavily on Q_VFWD_GAIN being set appropriately.
-       float settilt = constrain_float((SRV_Channels::get_output_scaled(SRV_Channel::k_throttle)-MAX(plane.aparm.throttle_min.get(),0)) * 0.02, 0, 1);
-       // Limit to Q_TILT_LOIT if it is set, otherwise limit to Q_TILT_MAX
-       if(max_angle_loit > 0 && (plane.control_mode == &plane.mode_qloiter || plane.control_mode == &plane.mode_qrtl || plane.control_mode == &plane.mode_qland)){
+        float settilt = constrain_float((SRV_Channels::get_output_scaled(SRV_Channel::k_throttle)-MAX(plane.aparm.throttle_min.get(),0)) * 0.02, 0, 1);
+        // Limit to Q_TILT_LOIT if it is set, otherwise limit to Q_TILT_MAX
+        if(max_angle_loit > 0 && (plane.control_mode == &plane.mode_qloiter || plane.control_mode == &plane.mode_qrtl || plane.control_mode == &plane.mode_qland)){
             slew(MIN(settilt * max_angle_loit * (1/90.0), get_forward_flight_tilt()));
-       } else{
+        } else{
             slew(MIN(settilt * max_angle_deg * (1/90.0), get_forward_flight_tilt()));
-       }
+        }
+        if (current_tilt>trans_yaw_angle/90) {
+            // the motors are all the way forward, start using them for fwd thrust
+            uint8_t mask = is_zero(current_throttle)?0:(uint8_t)tilt_mask.get();
+            motors->output_motor_mask(current_throttle, mask, trans_yaw_gain*plane.rudder_dt);
+            GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "Differential Thrust: %.2f", trans_yaw_gain*plane.rudder_dt);
+        }
     }
 }
 
@@ -603,17 +632,23 @@ void Tiltrotor::vectoring(void)
         return;
     }
     
-    const bool no_yaw = tilt_over_max_angle();
+    const bool no_yaw = (tilt_over_max_angle() || (quadplane.in_transition() && current_tilt>trans_yaw_angle/90));
     if (no_yaw) {
-        // fixed wing  We need to apply inverse scaling with throttle, and remove the surface speed scaling as
-        // we don't want tilt impacted by airspeed
-        const float gain = fixed_gain * fixed_tilt_limit; // Canard
-        const float gain_wing = fixed_gain * fixed_tilt_limit_wing; // Wing
+        float gain = 0.0; // Canard
+        float gain_wing = 0.0; // Wing
+        if (quadplane.in_transition()){
+            gain = trans_throw_gain * fixed_gain * fixed_tilt_limit; // Canard
+            gain_wing = trans_throw_gain * fixed_gain * fixed_tilt_limit_wing; // Wing
+        } else {
+            gain = fixed_gain * fixed_tilt_limit; // Canard
+            gain_wing = fixed_gain * fixed_tilt_limit_wing; // Wing            
+        }
+        
         const float mid  = gain * SRV_Channels::get_output_scaled(SRV_Channel::k_elevator) * (1/4500.0);
         const float midAil  = gain_wing * SRV_Channels::get_output_scaled(SRV_Channel::k_aileron) * (1/4500.0);
         const float right = gain * SRV_Channels::get_output_scaled(SRV_Channel::k_elevon_right) * (1/4500.0);
         const float left = gain * SRV_Channels::get_output_scaled(SRV_Channel::k_elevon_left) * (1/4500.0);
- 
+
         if (quadplane.ctrl_scheme == 1) {
             // Control Scheme is set to 1 (Wing for aileron, canard for elevator)
             SRV_Channels::set_output_scaled(SRV_Channel::k_tiltMotorLeft,1000 * constrain_float(base_output - mid,0,1));
