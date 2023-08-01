@@ -1,0 +1,45 @@
+# XPlane DREF map file for Squall
+# assumes: Aileron, Elevator, Throttle, Rudder, flaps
+
+{
+    "settings" : { "debug" : 0 },
+
+    "sim/operation/override/override_joystick" : { "type" : "fixed", "value" : 1 },
+    "sim/operation/override/override_throttles" : { "type" : "fixed", "value" : 1 },
+
+    # forward throttle, up to 4 engines
+    # Not used
+
+    # VTOL Motors
+    "sim/flightmodel/engine/ENGN_thro_use[0]" : { "type" : "range", "range" : 1, "channel" : 1 },
+    "sim/flightmodel/engine/ENGN_thro_use[1]" : { "type" : "range", "range" : 1, "channel" : 2 },
+    "sim/flightmodel/engine/ENGN_thro_use[2]" : { "type" : "range", "range" : 1, "channel" : 3 },	
+    "sim/flightmodel/engine/ENGN_thro_use[3]" : { "type" : "range", "range" : 1, "channel" : 4 },
+    "sim/flightmodel/engine/ENGN_thro_use[4]" : { "type" : "range", "range" : 1, "channel" : 5 },
+    "sim/flightmodel/engine/ENGN_thro_use[5]" : { "type" : "range", "range" : 1, "channel" : 6 },
+    "sim/flightmodel/engine/ENGN_thro_use[6]" : { "type" : "range", "range" : 1, "channel" : 7 },
+	"sim/flightmodel/engine/ENGN_thro_use[7]" : { "type" : "range", "range" : 1, "channel" : 8 },
+	
+	# Tilt Servos
+	"sim/aircraft/prop/acf_vertcant[0]" : { "type" : "angle", "range" : 45, "channel" : 9}, 
+	"sim/aircraft/prop/acf_vertcant[1]" : { "type" : "angle", "range" : 45, "channel" : 9}, 
+	"sim/aircraft/prop/acf_vertcant[2]" : { "type" : "angle", "range" : 45, "channel" : 10}, 
+	"sim/aircraft/prop/acf_vertcant[3]" : { "type" : "angle", "range" : 45, "channel" : 10}, 
+	"sim/aircraft/prop/acf_vertcant[4]" : { "type" : "angle", "range" : 45, "channel" : 11}, 
+	"sim/aircraft/prop/acf_vertcant[5]" : { "type" : "angle", "range" : 45, "channel" : 11}, 
+	"sim/aircraft/prop/acf_vertcant[6]" : { "type" : "angle", "range" : 45, "channel" : 12}, 
+	"sim/aircraft/prop/acf_vertcant[7]" : { "type" : "angle", "range" : 45, "channel" : 12}, 
+	
+	
+	
+    # joystick inputs
+    "axis1" : { "type" : "joyaxis", "channel" : 1, "input_min" : 0.8, "input_max" : 0.2 },
+    "axis2" : { "type" : "joyaxis", "channel" : 3, "input_min" : 0.8, "input_max" : 0.2 },
+    "axis3" : { "type" : "joyaxis", "channel" : 2, "input_min" : 0.8, "input_max" : 0.2 },
+    "axis4" : { "type" : "joyaxis", "channel" : 4, "input_min" : 0.2, "input_max" : 0.8 },
+    # "axis3" : { "type" : "joyaxis", "channel" : 5, "input_min" : 0.2, "input_max" : 0.9 },
+    "button1" : { "channel" : 6, "mask" : 1 },
+    "button2" : { "channel" : 7, "mask" : 2 },
+    "button3" : { "type" : "joybutton", "channel" : 8, "mask" : 24 },
+    "button4" : { "type" : "joybutton", "channel" : 9, "mask" : 4 }
+}
