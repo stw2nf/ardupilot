@@ -102,7 +102,7 @@ extern const AP_HAL::HAL& hal;
 #define REG_GOAL_POSITION 116
 
 // how many times to send servo configure msgs
-#define CONFIGURE_SERVO_COUNT 4
+#define CONFIGURE_SERVO_COUNT 10
 
 // how many times to send servo detection
 #define DETECT_SERVO_COUNT 4
@@ -244,14 +244,15 @@ void AP_RobotisServo::configure_servos(void)
     // disable torque control
     send_command(BROADCAST_ID, REG_TORQUE_ENABLE, 0, 1);
 
-        // disable replies unless we read
+    // disable replies unless we read
     send_command(BROADCAST_ID, REG_STATUS_RETURN, STATUS_RETURN_READ, 1);
 
     // use position control mode
-    send_command(BROADCAST_ID, REG_OPERATING_MODE, OPMODE_POS_CONTROL, 1);
+    // send_command(BROADCAST_ID, REG_OPERATING_MODE, OPMODE_POS_CONTROL, 1);
 
     // enable torque control
     send_command(BROADCAST_ID, REG_TORQUE_ENABLE, 1, 1);
+    
 }
 
 
