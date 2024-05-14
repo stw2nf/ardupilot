@@ -1,4 +1,5 @@
 #include "Plane.h"
+#include "../libraries/AP_Logger/AP_Logger_config.h"
 
 /*
   calculate speed scaling number for control surfaces. This is applied
@@ -476,7 +477,7 @@ int16_t Plane::calc_nav_yaw_coordinated()
 
     int16_t commanded_rudder;
     bool using_rate_controller = false;
-
+    float log_rudder_mix;
     // Received an external msg that guides yaw in the last 3 seconds?
     if (control_mode->is_guided_mode() &&
             plane.guided_state.last_forced_rpy_ms.z > 0 &&
@@ -496,8 +497,13 @@ int16_t Plane::calc_nav_yaw_coordinated()
         }
 
         commanded_rudder = yawController.get_servo_out(speed_scaler, disable_integrator);
-
-        // add in rudder mixing from roll
+        log_rudder_mix = (SRV_Channels::get_output_scaled(SRV_Channel::k_aileron)*g.kff_rudder_mix)/4500;  
+        AP::logger().Write("RUDD", "TimeUS,Mix",
+                "s%", // units: seconds, percentage
+                "F2", // mult: 1e-6, 1e2
+                "Qf", // format: uint64_t, float
+                AP_HAL::micros64(),
+                (double)log_rudder_mix);
         commanded_rudder += SRV_Channels::get_output_scaled(SRV_Channel::k_aileron) * g.kff_rudder_mix;
         commanded_rudder += rudder_in;
     }

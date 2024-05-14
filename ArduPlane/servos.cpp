@@ -18,6 +18,7 @@
 
 #include "Plane.h"
 #include <utility>
+#include "../libraries/AP_Logger/AP_Logger_config.h"
 
 /*****************************************
 * Throttle slew limit
@@ -791,6 +792,14 @@ void Plane::servos_twin_engine_mix(void)
         SRV_Channels::set_output_scaled(SRV_Channel::k_throttleRight, throttle_right);
         throttle_slew_limit(SRV_Channel::k_throttleLeft);
         throttle_slew_limit(SRV_Channel::k_throttleRight);
+        AP::logger().Write("THR", "TimeUS,Left,Right,Diff",
+                "s%%%", // units: seconds, percentage
+                "F000", // mult: 1e-6, 1e0, 1e0, 1e0
+                "Qfff", // format: uint64_t, float
+                AP_HAL::micros64(),
+                (double)throttle_left,
+                (double)throttle_right,
+                (double)throttle_left-throttle_right);
     }
 }
 
